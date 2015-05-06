@@ -84,8 +84,8 @@ public class RequestServlet extends HttpServlet {
             return null;
         }
 
-        BufferedReader reader =
-                new BufferedReader(new InputStreamReader(part.getInputStream(), "UTF-8"));
+        BufferedReader reader
+                = new BufferedReader(new InputStreamReader(part.getInputStream(), "UTF-8"));
         StringBuilder value = new StringBuilder();
         char[] buffer = new char[DEFAULT_BUFFER_SIZE];
         for (int length = 0; (length = reader.read(buffer)) > 0;) {
@@ -137,7 +137,6 @@ public class RequestServlet extends HttpServlet {
 //            }
 //        }
         //</editor-fold>
-
         //<editor-fold defaultstate="collapsed" desc="handle non natural language inputs (ie: opinion, q, sbytes)">
         boolean isMultipart = request.getContentType().trim().contains("multipart/form-data");
         String task, voice, backgid, strLang, strPlatform, strSpeechrate, grxml;
@@ -328,6 +327,12 @@ public class RequestServlet extends HttpServlet {
         //exception...(only for echo ?)
         boolean asrOnly = false;
         boolean kws = false;
+        boolean genvisrobot = false;
+
+        if (task.endsWith("-genvisrobot")) {
+            genvisrobot = true;
+            task = task.replace("-genvisrobot", "");
+        }
 
         if (task.endsWith("-asr")) {
             asrOnly = true;
@@ -449,7 +454,6 @@ public class RequestServlet extends HttpServlet {
                                 dos.writeBytes(lineEnd);
 
                                 // send multipart form data necesssary after file data... 
-
                                 dos.writeBytes(lineEnd);
                                 dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
 
@@ -460,7 +464,6 @@ public class RequestServlet extends HttpServlet {
 //                            try (OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream(), "UTF-8")) {
 //                                out.write("task=echo&lang=" + l.name() + "&sbytes=" + question);
 //                            }
-
                             if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
                                 throw new Exception(connection.getResponseMessage());
                             }
@@ -593,7 +596,6 @@ public class RequestServlet extends HttpServlet {
                                 dos.writeBytes(lineEnd);
 
                                 // send multipart form data necesssary after file data... 
-
                                 dos.writeBytes(lineEnd);
                                 dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
 
@@ -604,7 +606,6 @@ public class RequestServlet extends HttpServlet {
 //                            try (OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream(), "UTF-8")) {
 //                                out.write("task=echo&lang=" + l.name() + "&sbytes=" + question);
 //                            }
-
                             if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
                                 throw new Exception(connection.getResponseMessage());
                             }
@@ -737,7 +738,6 @@ public class RequestServlet extends HttpServlet {
                                 dos.writeBytes(lineEnd);
 
                                 // send multipart form data necesssary after file data... 
-
                                 dos.writeBytes(lineEnd);
                                 dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
 
@@ -748,7 +748,6 @@ public class RequestServlet extends HttpServlet {
 //                            try (OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream(), "UTF-8")) {
 //                                out.write("task=echo&lang=" + l.name() + "&sbytes=" + question);
 //                            }
-
                             if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
                                 throw new Exception(connection.getResponseMessage());
                             }
@@ -934,7 +933,6 @@ public class RequestServlet extends HttpServlet {
 //                            try (OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream(), "UTF-8")) {
 //                                out.write("task=echo&lang=" + l.name() + "&sbytes=" + question);
 //                            }
-
                             if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
                                 throw new Exception(connection.getResponseMessage());
                             }
@@ -1104,7 +1102,6 @@ public class RequestServlet extends HttpServlet {
                 }
 
 //                System.err.println(ttsr.get(0).getUrl());
-
                 if (remoteTTS) {
                     String ttsonly = ttsr.get(0).getSentence();
 
@@ -1133,12 +1130,38 @@ public class RequestServlet extends HttpServlet {
 //                        }
                     }
 
+                    jsontosend = JSON.toJSONString(ttsr);
+
                     if (doASR) {
-                        jsontosend = JSON.toJSONString(ttsr);
                         jsontosend = jsontosend.substring(0, jsontosend.length() - 2) + ",\"orig\":\"" + asrresult + "\"}]";
-                    } else {
-                        jsontosend = JSON.toJSONString(ttsr);
                     }
+
+                    if (genvisrobot) {
+                        String jsonvisrobot = "[";
+
+                        for (TTSResult t1 : ttsr) {
+                            jsonvisrobot += "[";
+                            for (String phon : t1.getPhones()) {
+                                String vrob = "";
+                                if ((vrob = TTS.phon2VisPT.get(phon.toLowerCase())) != null) {
+                                    String vtodot = "";
+                                    if ((vtodot = TTS.visToDot.get(vrob.toLowerCase())) != null) {
+                                        jsonvisrobot += vtodot + ", ";
+                                    } else {
+                                        jsonvisrobot += "[],";
+                                    }
+
+                                } else {
+                                    jsonvisrobot += "[],";
+                                }
+                            }
+                            jsonvisrobot += "],";
+                        }
+                        jsonvisrobot = jsonvisrobot.substring(0, jsonvisrobot.length() - 1) + "]";
+
+                        jsontosend = jsontosend.substring(0, jsontosend.length() - 2) + ",\"robotvis\":\"" + jsonvisrobot + "\"}]";
+                    }
+
                     jsontosend = "{\"ttsresults\":" + jsontosend + ",\"ted\":" + JSON.toJSONString(textemotionduration) + "}";       //.substring(0, jsontosend.length() - 1) + ",\"eint\":" + eint + ",\"etype\":\"" + etype + "\"}";
                 }
             } catch (Exception ex) {
@@ -1161,7 +1184,6 @@ public class RequestServlet extends HttpServlet {
 //            }
 //        }
 //        jsontosend += "]}";
-
         System.out.println(endstr);
 
 //        response.setHeader("Access-Control-Allow-Origin", "*");

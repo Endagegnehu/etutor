@@ -627,8 +627,10 @@ public class Kiosk implements Agent {
 
         if (args.length == 0 && System.getProperty("user.dir").startsWith("E:\\FalaComigo\\FCapps\\Kiosk")) {
 //            args = "dist2\\config\\local.properties lang=en asr-eval withSTMdumpIsolated".split(" ");       //eval mode
-            args = "dist2\\config\\local.properties lang=pt asr".split(" ");       //server mode; preload=es,en,pt staticTask=en,es,pt
+//            args = "dist2\\config\\local.properties lang=pt asr".split(" ");       //server mode; preload=es,en,pt staticTask=en,es,pt
 //            args = "dist2\\config\\local.properties autoclean lang=es staticTask=es asr tts qa".split(" ");       //server mode; autoclean
+            
+            args = "dist2\\config\\tts.properties lang=pt tts".split(" ");
         }
 
         //<editor-fold defaultstate="collapsed" desc="cmd line parse">

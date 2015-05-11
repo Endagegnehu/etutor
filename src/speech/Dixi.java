@@ -312,6 +312,11 @@ public class Dixi implements IDixiEventListener, TTS { //MergingEventListener {
     public Agent.lang getLang() {
         return ln;
     }
+
+    @Override
+    public List<TTSResult> getAudio(String voice, String sentence, String fnameprefx, AUDIOFORMAT af, float srate, byte[] prerecspeech, boolean usecache) throws Exception {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }
 //
 //

@@ -43,8 +43,11 @@ public class Kiosk implements Agent {
 //    public static final String now = new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime());
     public Properties config = null;
     public HashMap<Agent.lang, TTS> tts = null;
+    public HashMap<Agent.lang, TTS> faligntts = null;
+    public Set<lang> remoteTTSs;
     public HashMap<Agent.lang, ASR> asr = null;
     public HashMap<Agent.lang, ASR> asrkws = null;
+    public Set<lang> remoteASRs;
     public HashMap<Agent.lang, QA> qa = null;
     public HashMap<Agent.lang, QA> qaTalkpedia = null;
     public HashMap<Agent.lang, QA> qaLCexp = null;
@@ -53,8 +56,6 @@ public class Kiosk implements Agent {
     public File multipartDump = null;
     public String mp3enc = null;
     public String mp3encopt = null;
-    public Set<lang> remoteASRs;
-    public Set<lang> remoteTTSs;
 
     public Kiosk(String config1) throws Exception {
         try {
@@ -181,7 +182,6 @@ public class Kiosk implements Agent {
 //                writer.write(asrkey);
 //                writer.write("</item>\n");
 //            }
-
             writer.write("<item><ruleref special=\"GARBAGE\"/></item>\n");
             writer.write("\t\t\t</one-of>\n");
             writer.write("\t\t</item>\n");
@@ -232,7 +232,6 @@ public class Kiosk implements Agent {
                 // 	if(!question.startsWith("_"))
                 // 	    System.out.println(question.replaceAll("\\p{Punct}+", "").toLowerCase().trim());
                 // }
-
                 XPathExpression expr = null;
 //                if (l.equals(Agent.lang.PT)) {
                 expr = xpath.compile("//a");        //[not(fillWith)]
@@ -274,10 +273,8 @@ public class Kiosk implements Agent {
         //
         //            return;
         //        }
-
         //else, local config - 1 for each lang
-        if (config.getProperty("asrRepeat", "").isEmpty()
-//                || (!isStatictask && config.getProperty("corpora", "").isEmpty())
+        if (config.getProperty("asrRepeat", "").isEmpty() //                || (!isStatictask && config.getProperty("corpora", "").isEmpty())
                 ) {
             throw new Exception("missing config: asrRepeat");
         }
@@ -553,21 +550,15 @@ public class Kiosk implements Agent {
                     throw new Exception("pt: unable to find path in config");
                 }
 
-                TTS tts_pt = null;
-                if (!config.containsKey("dixiRemoteURL") || config.getProperty("dixiRemoteURL", "").isEmpty()) {
-                    tts_pt = new Dixi(
-                            config.getProperty("dixiConfig"),
-                            config.getProperty("dixiVoices"),
-                            config.getProperty("dump"),
-                            config.getProperty("oggenc"),
-                            config.getProperty("oggencopt", ""),
-                            config.getProperty("mp3enc"),
-                            config.getProperty("mp3encopt", ""),
-                            config.getProperty("dixiConfigSlow", ""));
-                }
-//                else {
-//                    tts_pt = new DixiRemote(config.getProperty("dixiRemoteURL", ""));
-//                }
+                TTS tts_pt = new Dixi(
+                        config.getProperty("dixiConfig"),
+                        config.getProperty("dixiVoices"),
+                        config.getProperty("dump"),
+                        config.getProperty("oggenc"),
+                        config.getProperty("oggencopt", ""),
+                        config.getProperty("mp3enc"),
+                        config.getProperty("mp3encopt", ""),
+                        config.getProperty("dixiConfigSlow", ""));
 
                 tts_pt.init();
                 tts_pt.setLang(ln);
@@ -629,7 +620,7 @@ public class Kiosk implements Agent {
 //            args = "dist2\\config\\local.properties lang=en asr-eval withSTMdumpIsolated".split(" ");       //eval mode
 //            args = "dist2\\config\\local.properties lang=pt asr".split(" ");       //server mode; preload=es,en,pt staticTask=en,es,pt
 //            args = "dist2\\config\\local.properties autoclean lang=es staticTask=es asr tts qa".split(" ");       //server mode; autoclean
-            
+
             args = "dist2\\config\\tts.properties lang=pt tts".split(" ");
         }
 
@@ -711,7 +702,6 @@ public class Kiosk implements Agent {
 //            }
 //        });
         //</editor-fold>
-
         //<editor-fold defaultstate="collapsed" desc="on Linux, start enter/return listener thread, which forces quit">
         String OS = System.getProperty("os.name").toLowerCase();
         if (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0) {
@@ -910,7 +900,6 @@ public class Kiosk implements Agent {
          * 
          */
 //                //</editor-fold>
-
         //<editor-fold defaultstate="collapsed" desc="enable asr">
         if (enableasr || enableasreval) {        // 
             af.asr = new HashMap<>();
@@ -939,9 +928,9 @@ public class Kiosk implements Agent {
 
                         System.err.println("--loading asr for " + l.name());
                         af.asr.put(l, af.setASR(l, staticTasks.contains(l)));
-                                                
+
                         af.asrkws.put(l, af.setASR(l, false));      // !!!!!!!!!!!!!!!!  to fix/code better...
-                        
+
                         /*
                          *      BR exception
                          */
@@ -1088,7 +1077,7 @@ public class Kiosk implements Agent {
             if (!af.config.getProperty("QAfuncTP", "").isEmpty()) {
                 //<editor-fold defaultstate="collapsed" desc="talkpedia+sss (ie, PT+EN)">
                 af.qaTalkpedia = new HashMap<>();
-                
+
                 if (!af.config.getProperty("QAendPointTP", "").isEmpty()) {
                     af.qaTalkpedia.put(Agent.lang.PT, new SOAPclient(af.config.getProperty("QAendPointTP"), af.config.getProperty("QAfuncTP")));
                 }
@@ -1096,10 +1085,10 @@ public class Kiosk implements Agent {
                     af.qaTalkpedia.put(Agent.lang.EN, new SOAPclient(af.config.getProperty("QAendPointTPEN"), af.config.getProperty("QAfuncTP")));
                 }
                 //</editor-fold>
-                
+
                 //<editor-fold defaultstate="collapsed" desc="lcoheur exps">
                 af.qaLCexp = new HashMap<>();
-                
+
                 if (!af.config.getProperty("QAendPointLCexp", "").isEmpty()) {
                     af.qaLCexp.put(Agent.lang.PT, new SOAPclient(af.config.getProperty("QAendPointLCexp"), af.config.getProperty("QAfuncTP")));
                 }
@@ -1175,7 +1164,6 @@ public class Kiosk implements Agent {
         }
         //</editor-fold>
 
-        //<editor-fold defaultstate="collapsed" desc="server mode">
         //<editor-fold defaultstate="collapsed" desc="autoclean">
         if (autoclean) {
             //clear inconsistent caches (del 0b files)
@@ -1220,7 +1208,6 @@ public class Kiosk implements Agent {
         }
         //</editor-fold>
 
-        //opinion management
         (af.opinionDump = new File(af.config.getProperty("dump"), "opinions")).mkdir();
 
         af.multipartDump = new File(af.config.getProperty("dump"), "multiparts");
@@ -1239,6 +1226,7 @@ public class Kiosk implements Agent {
 
             try {
                 for (final Agent.lang l : langs) {
+                    //<editor-fold defaultstate="collapsed" desc="set remote TTSs">
                     if (l.equals(Agent.lang.PT) && !af.config.getProperty("ttsRemoteURL", "").isEmpty()) {
                         af.tts.put(l, new TTSRemote(af.config.getProperty("ttsRemoteURL"), l));
                         af.remoteTTSs.add(l);
@@ -1254,6 +1242,55 @@ public class Kiosk implements Agent {
                         af.remoteTTSs.add(l);
                         continue;
                     }
+//</editor-fold>
+
+                    //<editor-fold defaultstate="collapsed" desc="set force alignment "TTSs" - complementary to normal/var "tts"">
+                    //<editor-fold defaultstate="collapsed" desc="validate configs">
+                    if (af.config.getProperty("oggenc", "").isEmpty()
+                            || af.config.getProperty("mp3enc", "").isEmpty()) {
+                        throw new Exception("missing config");
+                    }
+
+                    if (!new File(af.config.getProperty("mp3enc")).exists()
+                            || !new File(af.config.getProperty("oggenc")).exists()) {
+                        throw new Exception("unable to find path in config");
+                    }
+                    //</editor-fold>
+
+                    if (l.equals(Agent.lang.PT) && !af.config.getProperty("audimusAlignPT", "").isEmpty()) {
+                        Audimus alignPT = new Audimus(af.config.getProperty("audimusAlignPT"));
+
+                        af.faligntts.put(l, new ForceAlign(
+                                af.config.getProperty("dump"),
+                                af.config.getProperty("oggenc"),
+                                af.config.getProperty("oggencopt", ""),
+                                af.config.getProperty("mp3enc"),
+                                af.config.getProperty("mp3encopt", ""),
+                                alignPT, l));
+                    }
+                    if (l.equals(Agent.lang.EN) && !af.config.getProperty("audimusAlignEN", "").isEmpty()) {
+                        Audimus alignEN = new Audimus(af.config.getProperty("audimusAlignEN"));
+
+                        af.faligntts.put(l, new ForceAlign(
+                                af.config.getProperty("dump"),
+                                af.config.getProperty("oggenc"),
+                                af.config.getProperty("oggencopt", ""),
+                                af.config.getProperty("mp3enc"),
+                                af.config.getProperty("mp3encopt", ""),
+                                alignEN, l));
+                    }
+                    if (l.equals(Agent.lang.ES) && !af.config.getProperty("audimusAlignES", "").isEmpty()) {
+                        Audimus alignES = new Audimus(af.config.getProperty("audimusAlignES"));
+
+                        af.faligntts.put(l, new ForceAlign(
+                                af.config.getProperty("dump"),
+                                af.config.getProperty("oggenc"),
+                                af.config.getProperty("oggencopt", ""),
+                                af.config.getProperty("mp3enc"),
+                                af.config.getProperty("mp3encopt", ""),
+                                alignES, l));
+                    }
+//</editor-fold>
 
                     //else:
                     //<editor-fold defaultstate="collapsed" desc="commented: thread start">
@@ -1289,12 +1326,11 @@ public class Kiosk implements Agent {
 //        } catch (Exception ex) {
 //            Logger.getLogger(Kiosk.class.getName()).log(Level.SEVERE, null, ex);
 //        }
-
         String fnameprefx = af.config.getProperty("fnameprefx", "");        //empty allowed, servlet handled
 
         int reqport = Integer.parseInt(af.config.getProperty("requestport"));
         new RequestServer(af, host, reqport, fileport, fnameprefx).start();
-        //</editor-fold>
+
     }
 }
 //<editor-fold defaultstate="collapsed" desc="comment">

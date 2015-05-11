@@ -24,6 +24,7 @@ public interface ASR {
     public void loadTask(String grxml, String modelsDir, String tname) throws Exception;
     public ASRresult recognizeBytes(byte[] sound) throws Exception;
     public void setInputStream(AudioInputStream stream) throws Exception;
+    public int start() throws Exception;
     
     public void setID(String asrid);
     public String getID();

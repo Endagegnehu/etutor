@@ -125,6 +125,7 @@ public interface TTS {
 
     public boolean voiceAvailable(String voice);
 
+    public List<TTSResult> getAudio(String voice, String sentence, String fnameprefx, AUDIOFORMAT af, float srate, byte[] prerecspeech, boolean usecache) throws Exception;
     public List<TTSResult> getAudio(String voice, String sentence, String fnameprefx, AUDIOFORMAT af, float srate) throws Exception;
 
     public void setLang(Agent.lang ln);

@@ -107,6 +107,19 @@ public class Audimus implements IAudimusEventListener, ASR {
     }
 
     @Override
+    public int start() throws Exception {
+        int result = 0;
+
+        result = recognizer.audimus_start();
+        if (result < 0) {
+            System.out.println("RECOGNIZER START FAILED [code=" + result + "]");
+            throw new Exception("CODE : " + result);
+        }
+
+        return result;
+    }
+    
+    @Override
     public synchronized ASRresult recognizeBytes(byte[] audio) throws Exception {
         //<editor-fold defaultstate="collapsed" desc="dump segment pre proc">
         if (dumpSegs) {
